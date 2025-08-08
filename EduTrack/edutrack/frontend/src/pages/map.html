@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduTrack - School Infrastructure Map</title>
+    
+    <!-- External Libraries -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #2E8B57;
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            color: #1E90FF;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #64748b;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: #2E8B57;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #f1f5f9;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+        }
+
+        /* Map Container */
+        .map-section {
+            padding: 2rem 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .map-header {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .map-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .map-subtitle {
+            color: #64748b;
+            font-size: 1rem;
+        }
+
+        /* Filter Controls */
+        .filter-controls {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-group label {
+            font-weight: 500;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+
+        .filter-select {
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background: white;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #2E8B57;
+            box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.1);
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn-filter {
+            background: #2E8B57;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-filter:hover {
+            background: #236B47;
+        }
+
+        .btn-clear {
+            background: transparent;
+            color: #64748b;
+            border: 1px solid #d1d5db;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-clear:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+
+        /* Map Container */
+        .map-container {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: relative;
+            height: 600px;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        /* Legend */
+        .map-legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            z-index: 1000;
+        }
+
+        .legend-title {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: #1e293b;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .legend-marker {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .legend-marker.urgent { background: #dc2626; }
+        .legend-marker.high { background: #ea580c; }
+        .legend-marker.medium { background: #ca8a04; }
+        .legend-marker.low { background: #65a30d; }
+        .legend-marker.resolved { background: #16a34a; }
+
+        .legend-text {
+            font-size: 0.85rem;
+            color: #374151;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1rem;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .stat-card.urgent .stat-number { color: #dc2626; }
+        .stat-card.resolved .stat-number { color: #16a34a; }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .map-title {
+                font-size: 1.5rem;
+            }
+
+            .filter-row {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .map-container {
+                height: 500px;
+            }
+
+            .map-legend {
+                left: 10px;
+                bottom: 10px;
+                right: 10px;
+                width: auto;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Custom Marker Styles */
+        .custom-marker {
+            background: white;
+            border: 3px solid;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .custom-marker.urgent { border-color: #dc2626; }
+        .custom-marker.high { border-color: #ea580c; }
+        .custom-marker.medium { border-color: #ca8a04; }
+        .custom-marker.low { border-color: #65a30d; }
+        .custom-marker.resolved { border-color: #16a34a; }
+
+        /* Popup Styles */
+        .custom-popup {
+            max-width: 300px;
+        }
+
+        .popup-header {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .popup-issue {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .popup-priority {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .priority-urgent { background: #fef2f2; color: #dc2626; }
+        .priority-high { background: #fff7ed; color: #ea580c; }
+        .priority-medium { background: #fffbeb; color: #ca8a04; }
+        .priority-low { background: #f7fee7; color: #65a30d; }
+        .priority-resolved { background: #f0fdf4; color: #16a34a; }
+
+        .popup-date {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-graduation-cap"></i>
+                EduTrack
+            </a>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="report.html">Report Issue</a></li>
+                    <li><a href="map.html" class="active">Map View</a></li>
+                    <li><a href="about.html">About</a></li>
+                </ul>
+            </nav>
+            <div class="user-profile">
+                <i class="fas fa-user-circle"></i>
+                <span>Admin User</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Map Section -->
+    <section class="map-section">
+        <div class="container">
+            <!-- Map Header -->
+            <div class="map-header">
+                <h1 class="map-title">School Infrastructure Map</h1>
+                <p class="map-subtitle">Real-time view of reported issues across Kano State schools</p>
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="filter-controls">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label>Local Government Area</label>
+                        <select class="filter-select" id="lgaFilter">
+                            <option value="">All LGAs</option>
+                            <option value="kano-municipal">Kano Municipal</option>
+                            <option value="fagge">Fagge</option>
+                            <option value="dala">Dala</option>
+                            <option value="gwale">Gwale</option>
+                            <option value="tarauni">Tarauni</option>
+                            <option value="nassarawa">Nassarawa</option>
+                            <option value="ungogo">Ungogo</option>
+                            <option value="kumbotso">Kumbotso</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Issue Type</label>
+                        <select class="filter-select" id="issueFilter">
+                            <option value="">All Issues</option>
+                            <option value="infrastructure">Infrastructure</option>
+                            <option value="furniture">Furniture</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="safety">Safety</option>
+                            <option value="resources">Learning Resources</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Priority Level</label>
+                        <select class="filter-select" id="priorityFilter">
+                            <option value="">All Priorities</option>
+                            <option value="urgent">Urgent</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Status</label>
+                        <select class="filter-select" id="statusFilter">
+                            <option value="">All Status</option>
+                            <option value="reported">Reported</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="resolved">Resolved</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button class="btn-filter" onclick="applyFilters()">
+                        <i class="fas fa-search"></i> Apply Filters
+                    </button>
+                    <button class="btn-clear" onclick="clearFilters()">
+                        <i class="fas fa-times"></i> Clear All
+                    </button>
+                </div>
+            </div>
+
+            <!-- Map Container -->
+            <div class="map-container">
+                <div id="map"></div>
+                <div class="map-legend">
+                    <div class="legend-title">Issue Priority</div>
+                    <div class="legend-item">
+                        <div class="legend-marker urgent"></div>
+                        <span class="legend-text">Urgent</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-marker high"></div>
+                        <span class="legend-text">High</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-marker medium"></div>
+                        <span class="legend-text">Medium</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-marker low"></div>
+                        <span class="legend-text">Low</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-marker resolved"></div>
+                        <span class="legend-text">Resolved</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Bar -->
+            <div class="stats-bar">
+                <div class="stats-grid">
+                    <div class="stat-card urgent">
+                        <div class="stat-number" id="urgentCount">47</div>
+                        <div class="stat-label">Urgent Issues</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalReports">183</div>
+                        <div class="stat-label">Total Reports</div>
+                    </div>
+                    <div class="stat-card resolved">
+                        <div class="stat-number" id="resolvedCount">89</div>
+                        <div class="stat-label">Resolved Issues</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="schoolsReporting">124</div>
+                        <div class="stat-label">Schools Reporting</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Initialize map
+        const map = L.map('map').setView([12.0022, 8.5920], 10);
+
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Sample school data with reports
+        const schoolReports = [
+            {
+                id: 1,
+                name: "Government Primary School Fagge",
+                lat: 12.0022,
+                lng: 8.5120,
+                issue: "150 students sitting on bare floor, urgent need for desks and chairs",
+                priority: "urgent",
+                type: "furniture",
+                status: "reported",
+                date: "2024-08-05",
+                lga: "fagge"
+            },
+            {
+                id: 2,
+                name: "Kano Municipal Secondary School",
+                lat: 12.0100,
+                lng: 8.5200,
+                issue: "Leaking roof during rainy season affecting classes",
+                priority: "high",
+                type: "infrastructure",
+                status: "in-progress",
+                date: "2024-08-03",
+                lga: "kano-municipal"
+            },
+            {
+                id: 3,
+                name: "Dala Primary School",
+                lat: 11.9950,
+                lng: 8.4900,
+                issue: "Broken windows and doors need immediate repair",
+                priority: "medium",
+                type: "maintenance",
+                status: "reported",
+                date: "2024-08-07",
+                lga: "dala"
+            },
+            {
+                id: 4,
+                name: "Gwale Community School",
+                lat: 12.0200,
+                lng: 8.4800,
+                issue: "Lack of textbooks and learning materials",
+                priority: "high",
+                type: "resources",
+                status: "reported",
+                date: "2024-08-06",
+                lga: "gwale"
+            },
+            {
+                id: 5,
+                name: "Tarauni Girls Secondary",
+                lat: 12.0300,
+                lng: 8.5300,
+                issue: "Toilet facilities urgently need renovation",
+                priority: "urgent",
+                type: "infrastructure",
+                status: "in-progress",
+                date: "2024-08-04",
+                lga: "tarauni"
+            },
+            {
+                id: 6,
+                name: "Nassarawa Primary School",
+                lat: 11.9800,
+                lng: 8.5100,
+                issue: "Successfully renovated classrooms and provided furniture",
+                priority: "resolved",
+                type: "infrastructure",
+                status: "resolved",
+                date: "2024-07-20",
+                lga: "nassarawa"
+            },
+            {
+                id: 7,
+                name: "Ungogo Technical School",
+                lat: 12.0400,
+                lng: 8.4700,
+                issue: "Laboratory equipment needs replacement",
+                priority: "medium",
+                type: "resources",
+                status: "reported",
+                date: "2024-08-02",
+                lga: "ungogo"
+            },
+            {
+                id: 8,
+                name: "Kumbotso Primary School",
+                lat: 11.9700,
+                lng: 8.5400,
+                issue: "Playground safety hazards identified",
+                priority: "high",
+                type: "safety",
+                status: "in-progress",
+                date: "2024-08-01",
+                lga: "kumbotso"
+            }
+        ];
+
+        let markers = [];
+        let filteredReports = [...schoolReports];
+
+        function getMarkerColor(priority) {
+            const colors = {
+                urgent: '#dc2626',
+                high: '#ea580c',
+                medium: '#ca8a04',
+                low: '#65a30d',
+                resolved: '#16a34a'
+            };
+            return colors[priority] || '#64748b';
+        }
+
+        function createCustomIcon(priority) {
+            return L.divIcon({
+                className: 'custom-marker',
+                html: '',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10],
+                popupAnchor: [0, -10],
+                shadowUrl: null
+            });
+        }
+
+        function addMarkersToMap(reports) {
+            // Clear existing markers
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+
+            reports.forEach(report => {
+                const marker = L.circleMarker([report.lat, report.lng], {
+                    color: 'white',
+                    fillColor: getMarkerColor(report.priority),
+                    fillOpacity: 0.8,
+                    weight: 2,
+                    radius: 8
+                });
+
+                const popupContent = `
+                    <div class="custom-popup">
+                        <div class="popup-header">${report.name}</div>
+                        <div class="popup-issue">${report.issue}</div>
+                        <div class="popup-priority priority-${report.priority}">${report.priority}</div>
+                        <div class="popup-date">Reported: ${new Date(report.date).toLocaleDateString()}</div>
+                    </div>
+                `;
+
+                marker.bindPopup(popupContent);
+                marker.addTo(map);
+                markers.push(marker);
+            });
+        }
+
+        function applyFilters() {
+            const lgaFilter = document.getElementById('lgaFilter').value;
+            const issueFilter = document.getElementById('issueFilter').value;
+            const priorityFilter = document.getElementById('priorityFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            filteredReports = schoolReports.filter(report => {
+                return (!lgaFilter || report.lga === lgaFilter) &&
+                       (!issueFilter || report.type === issueFilter) &&
+                       (!priorityFilter || report.priority === priorityFilter) &&
+                       (!statusFilter || report.status === statusFilter);
+            });
+
+            addMarkersToMap(filteredReports);
+            updateStats();
+        }
+
+        function clearFilters() {
+            document.getElementById('lgaFilter').value = '';
+            document.getElementById('issueFilter').value = '';
+            document.getElementById('priorityFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            
+            filteredReports = [...schoolReports];
+            addMarkersToMap(filteredReports);
+            updateStats();
+        }
+
+        function updateStats() {
+            const urgentCount = filteredReports.filter(r => r.priority === 'urgent').length;
+            const resolvedCount = filteredReports.filter(r => r.status === 'resolved').length;
+            const totalReports = filteredReports.length;
+            const schoolsReporting = new Set(filteredReports.map(r => r.name)).size;
+
+            document.getElementById('urgentCount').textContent = urgentCount;
+            document.getElementById('resolvedCount').textContent = resolvedCount;
+            document.getElementById('totalReports').textContent = totalReports;
+            document.getElementById('schoolsReporting').textContent = schoolsReporting;
+        }
+
+        // Initialize map with all markers
+        addMarkersToMap(schoolReports);
+        updateStats();
+
+        // Add click handler for filter controls
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-apply filters when select values change
+            const filterSelects = document.querySelectorAll('.filter-select');
+            filterSelects.forEach(select => {
+                select.addEventListener('change', applyFilters);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report School Issue - EduTrack</title>
+    <meta name="description" content="Report school infrastructure issues in Kano State. Anonymous reporting in under 2 minutes.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet CSS for location picker -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-green: #2E8B57;
+            --secondary-blue: #1E90FF;
+            --dark-green: #1A5F3F;
+            --light-green: #E8F5E8;
+            --text-dark: #2D3748;
+            --text-light: #718096;
+            --white: #FFFFFF;
+            --gray-50: #F7FAFC;
+            --gray-100: #EDF2F7;
+            --gray-200: #E2E8F0;
+            --gray-300: #CBD5E0;
+            --red-500: #e53e3e;
+            --orange-500: #dd6b20;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--gray-50);
+            overflow-x: hidden;
+        }
+
+        /* Header Styles */
+        .header {
+            background: var(--white);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-green);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--primary-green);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .back-button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .back-button:hover {
+            color: var(--primary-green);
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .progress-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .progress-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-subtitle {
+            color: var(--text-light);
+            font-size: 1rem;
+        }
+
+        .progress-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            margin: 2rem 0;
+        }
+
+        .progress-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gray-200);
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+
+        .progress-line-fill {
+            height: 100%;
+            background: var(--primary-green);
+            transition: width 0.3s ease;
+            width: 33%;
+        }
+
+        .progress-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: var(--text-light);
+            transition: all 0.3s ease;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-circle.active {
+            background: var(--primary-green);
+            color: white;
+        }
+
+        .step-circle.completed {
+            background: var(--primary-green);
+            color: white;
+        }
+
+        .step-label {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            text-align: center;
+            max-width: 80px;
+        }
+
+        .step-label.active {
+            color: var(--primary-green);
+            font-weight: 600;
+        }
+
+        /* Form Container */
+        .form-container {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .form-step {
+            display: none;
+        }
+
+        .form-step.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-header {
+            margin-bottom: 2rem;
+        }
+
+        .step-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .step-description {
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .form-label.required::after {
+            content: " *";
+            color: var(--red-500);
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--gray-200);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: var(--white);
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-error {
+            color: var(--red-500);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .form-error.show {
+            display: block;
+        }
+
+        /* Issue Type Grid */
+        .issue-types {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .issue-type-card {
+            border: 2px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--white);
+        }
+
+        .issue-type-card:hover {
+            border-color: var(--primary-green);
+            transform: translateY(-2px);
+        }
+
+        .issue-type-card.selected {
+            border-color: var(--primary-green);
+            background: var(--light-green);
+        }
+
+        .issue-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .issue-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: var(--text-dark);
+        }
+
+        .issue-description {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        /* Priority Selector */
+        .priority-options {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .priority-option {
+            flex: 1;
+            border: 2px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .priority-option.low {
+            border-color: var(--primary-green);
+        }
+
+        .priority-option.medium {
+            border-color: var(--orange-500);
+        }
+
+        .priority-option.high {
+            border-color: var(--red-500);
+        }
+
+        .priority-option.selected.low {
+            background: rgba(46, 139, 87, 0.1);
+            border-color: var(--primary-green);
+        }
+
+        .priority-option.selected.medium {
+            background: rgba(221, 107, 32, 0.1);
+            border-color: var(--orange-500);
+        }
+
+        .priority-option.selected.high {
+            background: rgba(229, 62, 62, 0.1);
+            border-color: var(--red-500);
+        }
+
+        /* File Upload */
+        .file-upload-area {
+            border: 2px dashed var(--gray-300);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--primary-green);
+            background: var(--gray-50);
+        }
+
+        .file-upload-area.dragover {
+            border-color: var(--primary-green);
+            background: var(--light-green);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--gray-300);
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-hint {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .uploaded-files {
+            margin-top: 1rem;
+        }
+
+        .uploaded-file {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .file-size {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        .file-remove {
+            color: var(--red-500);
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        /* Location Picker */
+        .location-picker {
+            margin-top: 1rem;
+        }
+
+        .map-container {
+            height: 300px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid var(--gray-200);
+        }
+
+        .location-info {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .location-input {
+            flex: 1;
+        }
+
+        .get-location-btn {
+            background: var(--secondary-blue);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s ease;
+        }
+
+        .get-location-btn:hover {
+            background: #1873cc;
+        }
+
+        /* Anonymous Toggle */
+        .anonymous-toggle {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--gray-50);
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 24px;
+            background: var(--gray-300);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: var(--primary-green);
+        }
+
+        .toggle-handle {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-switch.active .toggle-handle {
+            transform: translateX(26px);
+        }
+
+        .toggle-info {
+            flex: 1;
+        }
+
+        .toggle-title {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .toggle-description {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        /* Contact Info */
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* Form Navigation */
+        .form-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--text-dark);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+
+        .btn-primary {
+            background: var(--primary-green);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--dark-green);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            background: var(--gray-300);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Loading State */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Success State */
+        .success-container {
+            text-align: center;
+            padding: 3rem 2rem;
+            display: none;
+        }
+
+        .success-container.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--primary-green);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            color: white;
+            font-size: 2rem;
+        }
+
+        .success-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .success-description {
+            color: var(--text-light);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .success-id {
+            background: var(--gray-50);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            font-family: monospace;
+            font-weight: 600;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-container {
+                padding: 1rem;
+            }
+
+            .main-container {
+                margin: 1rem auto;
+                padding: 0 0.5rem;
+            }
+
+            .progress-container,
+            .form-container {
+                padding: 1.5rem;
+            }
+
+            .progress-bar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .progress-line {
+                display: none;
+            }
+
+            .progress-steps {
+                display: flex;
+                justify-content: space-between;
+                width: 100%;
+            }
+
+            .step-label {
+                max-width: none;
+            }
+
+            .issue-types {
+                grid-template-columns: 1fr;
+            }
+
+            .priority-options {
+                flex-direction: column;
+            }
+
+            .contact-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-navigation {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .progress-title {
+                font-size: 1.5rem;
+            }
+
+            .step-title {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav-container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">📚</div>
+                EduTrack
+            </a>
+            
+            <a href="index.html" class="back-button">
+                ← Back to Home
+            </a>
+        </nav>
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Progress Section -->
+        <div class="progress-container">
+            <div class="progress-header">
+                <h1 class="progress-title">Report School Issue</h1>
+                <p class="progress-subtitle">Help us improve education infrastructure in Kano State</p>
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress-line">
+                    <div class="progress-line-fill" id="progressFill"></div>
+                </div>
+                
+                <div class="progress-step">
+                    <div class="step-circle active" id="step1Circle">1</div>
+                    <div class="step-label active">Issue Details</div>
+                </div>
+                
+                <div class="progress-step">
+                    <div class="step-circle" id="step2Circle">2</div>
+                    <div class="step-label">Location & Photos</div>
+                </div>
+                
+                <div class="progress-step">
+                    <div class="step-circle" id="step3Circle">3</div>
+                    <div class="step-label">Contact Info</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Container -->
+        <div class="form-container">
+            <form id="reportForm">
+                <!-- Step 1: Issue Details -->
+                <div class="form-step active" id="step1">
+                    <div class="step-header">
+                        <h2 class="step-title">What issue would you like to report?</h2>
+                        <p class="step-description">Select the type of infrastructure issue and provide details about the problem.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label required">Issue Type</label>
+                        <div class="issue-types">
+                            <div class="issue-type-card" data-type="infrastructure">
+                                <span class="issue-icon">🏗️</span>
+                                <div class="issue-title">Infrastructure</div>
+                                <div class="issue-description">Broken desks, chairs, damaged classrooms</div>
+                            </div>
+                            
+                            <div class="issue-type-card" data-type="sanitation">
+                                <span class="issue-icon">🚿</span>
+                                <div class="issue-title">Sanitation</div>
+                                <div class="issue-description">Toilets, water supply, hygiene facilities</div>
+                            </div>
+                            
+                            <div class="issue-type-card" data-type="safety">
+                                <span class="issue-icon">⚠️</span>
+                                <div class="issue-title">Safety</div>
+                                <div class="issue-description">Security, dangerous structures, hazards</div>
+                            </div>
+                            
+                            <div class="issue-type-card" data-type="learning">
+                                <span class="issue-icon">📚</span>
+                                <div class="issue-title">Learning Materials</div>
+                                <div class="issue-description">Books, equipment, teaching aids</div>
+                            </div>
+                            
+                            <div class="issue-type-card" data-type="utilities">
+                                <span class="issue-icon">⚡</span>
+                                <div class="issue-title">Utilities</div>
+                                <div class="issue-description">Electricity, water, internet connectivity</div>
+                            </div>
+                            
+                            <div class="issue-type-card" data-type="other">
+                                <span class="issue-icon">🔧</span>
+                                <div class="issue-title">Other</div>
+                                <div class="issue-description">Any other infrastructure concern</div>
+                            </div>
+                        </div>
+                        <div class="form-error" id="issueTypeError">Please select an issue type</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label required" for="schoolName">School Name</label>
+                        <input type="text" class="form-input" id="schoolName" placeholder="Enter the name of the school">
+                        <div class="form-error" id="schoolNameError">School name is required</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label required">Priority Level</label>
+                        <div class="priority-options">
+                            <div class="priority-option low" data-priority="low">
+                                <div style="color: var(--primary-green); font-size: 1.5rem; margin-bottom: 0.5rem;">🟢</div>
+                                <div style="font-weight: 600; margin-bottom: 0.25rem;">Low</div>
+                                <div style="font-size: 0.85rem; color: var(--text-light);">Can wait for regular maintenance</div>
+                            </div>
+                            
+                            <div class="priority-option medium" data-priority="medium">
+                                <div style="color: var(--orange-500); font-size: 1.5rem; margin-bottom: 0.5rem;">🟡</div>
+                                <div style="font-weight: 600; margin-bottom: 0.25rem;">Medium</div>
+                                <div style="font-size: 0.85rem; color: var(--text-light);">Needs attention within a month</div>
+                            </div>
+                            
+                            <div class="priority-option high" data-priority="high">
+                                <div style="color: var(--red-500); font-size: 1.5rem; margin-bottom: 0.5rem;">🔴</div>
+                                <div style="font-weight: 600; margin-bottom: 0.25rem;">High</div>
+                                <div style="font-size: 0.85rem; color: var(--text-light);">Urgent - affects safety/learning</div>
+                            </div>
+                        </div>
+                        <div class="form-error" id="priorityError">Please select a priority level</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label required" for="description">Description</label>
+                        <textarea class="form-textarea" id="description" placeholder="Please describe the issue in detail. Include how it affects students and learning..."></textarea>
+                        <div class="form-error" id="descriptionError">Description must be at least 10 characters</div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Location & Photos -->
+                <div class="form-step" id="step2">
+                    <div class="step-header">
+                        <h2 class="step-title">Location and Evidence</h2>
+                        <p class="step-description">Help us locate the school and provide photos if available.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label required" for="lga">Local Government Area</label>
+                        <select class="form-select" id="lga">
+                            <option value="">Select LGA</option>
+                            <option value="Ajingi">Ajingi</option>
+                            <option value="Albasu">Albasu</option>
+                            <option value="Bagwai">Bagwai</option>
+                            <option value="Bebeji">Bebeji</option>
+                            <option value="Bichi">Bichi</option>
+                            <option value="Bunkure">Bunkure</option>
+                            <option value="Dala">Dala</option>
+                            <option value="Dambatta">Dambatta</option>
+                            <option value="Dawakin Kudu">Dawakin Kudu</option>
+                            <option value="Dawakin Tofa">Dawakin Tofa</option>
+                            <option value="Doguwa">Doguwa</option>
+                            <option value="Fagge">Fagge</option>
+                            <option value="Gabasawa">Gabasawa</option>
+                            <option value="Garko">Garko</option>
+                            <option value="Garum Mallam">Garum Mallam</option>
+                            <option value="Gaya">Gaya</option>
+                            <option value="Gezawa">Gezawa</option>
+                            <option value="Gwale">Gwale</option>
+                            <option value="Gwarzo">Gwarzo</option>
+                            <option value="Kabo">Kabo</option>
+                            <option value="Kano Municipal">Kano Municipal</option>
+                            <option value="Karaye">Karaye</option>
+                            <option value="Kibiya">Kibiya</option>
+                            <option value="Kiru">Kiru</option>
+                            <option value="Kumbotso">Kumbotso</option>
+                            <option value="Kunchi">Kunchi</option>
+                            <option value="Kura">Kura</option>
+                            <option value="Madobi">Madobi</option>
+                            <option value="Makoda">Makoda</option>
+                            <option value="Minjibir">Minjibir</option>
+                            <option value="Nassarawa">Nassarawa</option>
+                            <option value="Rano">Rano</option>
+                            <option value="Rimin Gado">Rimin Gado</option>
+                            <option value="Rogo">Rogo</option>
+                            <option value="Shanono">Shanono</option>
+                            <option value="Sumaila">Sumaila</option>
+                            <option value="Takai">Takai</option>
+                            <option value="Tarauni">Tarauni</option>
+                            <option value="Tofa">Tofa</option>
+                            <option value="Tsanyawa">Tsanyawa</option>
+                            <option value="Tudun Wada">Tudun Wada</option>
+                            <option value="Ungogo">Ungogo</option>
+                            <option value="Warawa">Warawa</option>
+                            <option value="Wudil">Wudil</option>
+                        </select>
+                        <div class="form-error" id="lgaError">Please select your LGA</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="address">School Address</label>
+                        <input type="text" class="form-input" id="address" placeholder="Enter school address or nearby landmarks">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Location Coordinates</label>
+                        <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 1rem;">
+                            Click on the map to mark the school location, or use GPS to get your current location.
+                        </p>
+                        
+                        <div class="location-info">
+                            <div class="location-input">
+                                <input type="text" class="form-input" id="coordinates" placeholder="Latitude, Longitude" readonly>
+                            </div>
+                            <button type="button" class="get-location-btn" id="getLocationBtn">
+                                📍 Use GPS
+                            </button>
+                        </div>
+                        
+                        <div class="location-picker">
+                            <div class="map-container" id="map"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Upload Photos (Optional)</label>
+                        <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 1rem;">
+                            Photos help us understand the issue better. You can upload up to 5 images.
+                        </p>
+                        
+                        <div class="file-upload-area" id="fileUploadArea">
+                            <input type="file" class="file-input" id="fileInput" multiple accept="image/*">
+                            <div class="upload-icon">📷</div>
+                            <div class="upload-text">
+                                <strong>Click to upload photos</strong> or drag and drop
+                            </div>
+                            <div class="upload-hint">
+                                PNG, JPG up to 5MB each (max 5 files)
+                            </div>
+                        </div>
+                        
+                        <div class="uploaded-files" id="uploadedFiles"></div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Contact Information -->
+                <div class="form-step" id="step3">
+                    <div class="step-header">
+                        <h2 class="step-title">Contact Information</h2>
+                        <p class="step-description">We may need to contact you for follow-up or clarification.</p>
+                    </div>
+
+                    <div class="anonymous-toggle">
+                        <div class="toggle-switch" id="anonymousToggle">
+                            <div class="toggle-handle"></div>
+                        </div>
+                        <div class="toggle-info">
+                            <div class="toggle-title">Submit Anonymously</div>
+                            <div class="toggle-description">
+                                Your identity will be protected. We'll only use your contact info for urgent follow-ups.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="contactFields">
+                        <div class="contact-grid">
+                            <div class="form-group">
+                                <label class="form-label" for="reporterName">Your Name</label>
+                                <input type="text" class="form-input" id="reporterName" placeholder="Enter your full name">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="reporterRole">Your Role</label>
+                                <select class="form-select" id="reporterRole">
+                                    <option value="">Select your role</option>
+                                    <option value="teacher">Teacher</option>
+                                    <option value="parent">Parent</option>
+                                    <option value="student">Student</option>
+                                    <option value="community_member">Community Member</option>
+                                    <option value="school_admin">School Administrator</option>
+                                    <option value="government_official">Government Official</option>
+                                    <option value="ngo_volunteer">NGO/Volunteer</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="contact-grid">
+                            <div class="form-group">
+                                <label class="form-label" for="phone">Phone Number</label>
+                                <input type="tel" class="form-input" id="phone" placeholder="e.g., 08012345678">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="email">Email Address</label>
+                                <input type="email" class="form-input" id="email" placeholder="your.email@example.com">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="additionalInfo">Additional Information (Optional)</label>
+                            <textarea class="form-textarea" id="additionalInfo" placeholder="Any other details that might help us resolve this issue..."></textarea>
+                        </div>
+                    </div>
+
+                    <div style="background: var(--light-green); padding: 1rem; border-radius: 8px; margin-top: 1.5rem;">
+                        <div style="display: flex; align-items: start; gap: 0.75rem;">
+                            <span style="font-size: 1.2rem;">🔒</span>
+                            <div>
+                                <div style="font-weight: 600; margin-bottom: 0.25rem;">Privacy Protected</div>
+                                <div style="font-size: 0.9rem; color: var(--text-light);">
+                                    Your personal information is encrypted and only shared with authorized personnel for issue resolution.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Success State -->
+                <div class="success-container" id="successContainer">
+                    <div class="success-icon">✅</div>
+                    <h2 class="success-title">Report Submitted Successfully!</h2>
+                    <p class="success-description">
+                        Thank you for reporting this issue. Your report has been received and will be reviewed by the appropriate authorities.
+                    </p>
+                    <div class="success-id">
+                        Report ID: <span id="reportId">EDT-2024-001234</span>
+                    </div>
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <a href="dashboard.html" class="btn-primary">View Dashboard</a>
+                        <a href="index.html" class="btn-secondary">Back to Home</a>
+                    </div>
+                </div>
+
+                <!-- Form Navigation -->
+                <div class="form-navigation" id="formNavigation">
+                    <button type="button" class="btn btn-secondary" id="prevBtn" style="display: none;">
+                        ← Previous
+                    </button>
+                    <div></div>
+                    <button type="button" class="btn btn-primary" id="nextBtn">
+                        Next →
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentStep = 1;
+        let map;
+        let marker;
+        let selectedFiles = [];
+        let formData = {
+            issueType: '',
+            schoolName: '',
+            priority: '',
+            description: '',
+            lga: '',
+            address: '',
+            coordinates: '',
+            photos: [],
+            anonymous: false,
+            reporterName: '',
+            reporterRole: '',
+            phone: '',
+            email: '',
+            additionalInfo: ''
+        };
+
+        // Initialize the form
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeMap();
+            setupEventListeners();
+            updateProgressBar();
+        });
+
+        // Initialize Leaflet map
+        function initializeMap() {
+            // Center on Kano State
+            map = L.map('map').setView([11.9974, 8.5206], 10);
+            
+            // Add tile layer
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add click event to map
+            map.on('click', function(e) {
+                const lat = e.latlng.lat.toFixed(6);
+                const lng = e.latlng.lng.toFixed(6);
+                
+                // Remove existing marker
+                if (marker) {
+                    map.removeLayer(marker);
+                }
+                
+                // Add new marker
+                marker = L.marker([lat, lng]).addTo(map);
+                
+                // Update coordinates input
+                document.getElementById('coordinates').value = `${lat}, ${lng}`;
+                formData.coordinates = `${lat}, ${lng}`;
+                
+                showToast('Location selected successfully! 📍');
+            });
+        }
+
+        // Setup all event listeners
+        function setupEventListeners() {
+            // Issue type selection
+            document.querySelectorAll('.issue-type-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    document.querySelectorAll('.issue-type-card').forEach(c => c.classList.remove('selected'));
+                    this.classList.add('selected');
+                    formData.issueType = this.dataset.type;
+                    hideError('issueTypeError');
+                });
+            });
+
+            // Priority selection
+            document.querySelectorAll('.priority-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.priority-option').forEach(o => o.classList.remove('selected'));
+                    this.classList.add('selected');
+                    formData.priority = this.dataset.priority;
+                    hideError('priorityError');
+                });
+            });
+
+            // Input field listeners
+            document.getElementById('schoolName').addEventListener('input', function() {
+                formData.schoolName = this.value;
+                hideError('schoolNameError');
+            });
+
+            document.getElementById('description').addEventListener('input', function() {
+                formData.description = this.value;
+                hideError('descriptionError');
+            });
+
+            document.getElementById('lga').addEventListener('change', function() {
+                formData.lga = this.value;
+                hideError('lgaError');
+            });
+
+            document.getElementById('address').addEventListener('input', function() {
+                formData.address = this.value;
+            });
+
+            // GPS location button
+            document.getElementById('getLocationBtn').addEventListener('click', getCurrentLocation);
+
+            // File upload
+            setupFileUpload();
+
+            // Anonymous toggle
+            document.getElementById('anonymousToggle').addEventListener('click', toggleAnonymous);
+
+            // Contact field listeners
+            setupContactListeners();
+
+            // Navigation buttons
+            document.getElementById('nextBtn').addEventListener('click', nextStep);
+            document.getElementById('prevBtn').addEventListener('click', prevStep);
+
+            // Form submission
+            document.getElementById('reportForm').addEventListener('submit', submitReport);
+        }
+
+        // Setup file upload functionality
+        function setupFileUpload() {
+            const fileInput = document.getElementById('fileInput');
+            const uploadArea = document.getElementById('fileUploadArea');
+            const uploadedFiles = document.getElementById('uploadedFiles');
+
+            // Click to upload
+            fileInput.addEventListener('change', handleFileSelect);
+
+            // Drag and drop
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', function() {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = Array.from(e.dataTransfer.files);
+                handleFiles(files);
+            });
+        }
+
+        // Handle file selection
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            handleFiles(files);
+        }
+
+        // Process uploaded files
+        function handleFiles(files) {
+            files.forEach(file => {
+                if (selectedFiles.length >= 5) {
+                    showToast('Maximum 5 files allowed', 'error');
+                    return;
+                }
+
+                if (file.size > 5 * 1024 * 1024) {
+                    showToast(`File ${file.name} is too large (max 5MB)`, 'error');
+                    return;
+                }
+
+                if (!file.type.startsWith('image/')) {
+                    showToast(`File ${file.name} is not an image`, 'error');
+                    return;
+                }
+
+                selectedFiles.push(file);
+                displayFile(file);
+            });
+
+            formData.photos = selectedFiles;
+        }
+
+        // Display uploaded file
+        function displayFile(file) {
+            const uploadedFiles = document.getElementById('uploadedFiles');
+            const fileDiv = document.createElement('div');
+            fileDiv.className = 'uploaded-file';
+            
+            fileDiv.innerHTML = `
+                <div class="file-info">
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-size">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                </div>
+                <div class="file-remove" onclick="removeFile('${file.name}')">🗑️</div>
+            `;
+            
+            uploadedFiles.appendChild(fileDiv);
+        }
+
+        // Remove uploaded file
+        function removeFile(fileName) {
+            selectedFiles = selectedFiles.filter(file => file.name !== fileName);
+            formData.photos = selectedFiles;
+            
+            // Re-render uploaded files
+            const uploadedFiles = document.getElementById('uploadedFiles');
+            uploadedFiles.innerHTML = '';
+            selectedFiles.forEach(file => displayFile(file));
+        }
+
+        // Get current GPS location
+        function getCurrentLocation() {
+            const btn = document.getElementById('getLocationBtn');
+            const originalText = btn.innerHTML;
+            
+            btn.innerHTML = '<div class="loading"></div> Getting Location...';
+            btn.disabled = true;
+
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude.toFixed(6);
+                        const lng = position.coords.longitude.toFixed(6);
+                        
+                        // Remove existing marker
+                        if (marker) {
+                            map.removeLayer(marker);
+                        }
+                        
+                        // Add marker and center map
+                        marker = L.marker([lat, lng]).addTo(map);
+                        map.setView([lat, lng], 15);
+                        
+                        // Update coordinates
+                        document.getElementById('coordinates').value = `${lat}, ${lng}`;
+                        formData.coordinates = `${lat}, ${lng}`;
+                        
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                        showToast('Location obtained successfully! 📍');
+                    },
+                    function(error) {
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                        showToast('Unable to get location. Please click on the map instead.', 'error');
+                    }
+                );
+            } else {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                showToast('Geolocation is not supported by this browser', 'error');
+            }
+        }
+
+        // Toggle anonymous reporting
+        function toggleAnonymous() {
+            const toggle = document.getElementById('anonymousToggle');
+            const contactFields = document.getElementById('contactFields');
+            
+            toggle.classList.toggle('active');
+            formData.anonymous = toggle.classList.contains('active');
+            
+            if (formData.anonymous) {
+                contactFields.style.opacity = '0.5';
+                contactFields.style.pointerEvents = 'none';
+                showToast('Anonymous mode enabled 🔒');
+            } else {
+                contactFields.style.opacity = '1';
+                contactFields.style.pointerEvents = 'auto';
+            }
+        }
+
+        // Setup contact field listeners
+        function setupContactListeners() {
+            const fields = ['reporterName', 'reporterRole', 'phone', 'email', 'additionalInfo'];
+            
+            fields.forEach(field => {
+                const element = document.getElementById(field);
+                element.addEventListener('input', function() {
+                    formData[field] = this.value;
+                });
+            });
+        }
+
+        // Navigation functions
+        function nextStep() {
+            if (validateCurrentStep()) {
+                if (currentStep < 3) {
+                    currentStep++;
+                    showStep();
+                } else {
+                    submitReport();
+                }
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                showStep();
+            }
+        }
+
+        // Show current step
+        function showStep() {
+            // Hide all steps
+            document.querySelectorAll('.form-step').forEach(step => {
+                step.classList.remove('active');
+            });
+            
+            // Show current step
+            document.getElementById(`step${currentStep}`).classList.add('active');
+            
+            // Update progress bar
+            updateProgressBar();
+            
+            // Update navigation buttons
+            updateNavigationButtons();
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Update progress bar
+        function updateProgressBar() {
+            const progressFill = document.getElementById('progressFill');
+            const percentage = ((currentStep - 1) / 2) * 100;
+            progressFill.style.width = percentage + '%';
+            
+            // Update step circles
+            for (let i = 1; i <= 3; i++) {
+                const circle = document.getElementById(`step${i}Circle`);
+                const label = circle.parentNode.querySelector('.step-label');
+                
+                if (i < currentStep) {
+                    circle.classList.add('completed');
+                    circle.classList.remove('active');
+                    circle.innerHTML = '✓';
+                } else if (i === currentStep) {
+                    circle.classList.add('active');
+                    circle.classList.remove('completed');
+                    circle.innerHTML = i;
+                    label.classList.add('active');
+                } else {
+                    circle.classList.remove('active', 'completed');
+                    circle.innerHTML = i;
+                    label.classList.remove('active');
+                }
+            }
+        }
+
+        // Update navigation buttons
+        function updateNavigationButtons() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            if (currentStep === 1) {
+                prevBtn.style.display = 'none';
+            } else {
+                prevBtn.style.display = 'block';
+            }
+            
+            if (currentStep === 3) {
+                nextBtn.innerHTML = '<div class="loading" style="display: none;"></div> Submit Report';
+            } else {
+                nextBtn.innerHTML = 'Next →';
+            }
+        }
+
+        // Validate current step
+        function validateCurrentStep() {
+            if (currentStep === 1) {
+                return validateStep1();
+            } else if (currentStep === 2) {
+                return validateStep2();
+            } else if (currentStep === 3) {
+                return validateStep3();
+            }
+            return true;
+        }
+
+        // Validate step 1
+        function validateStep1() {
+            let isValid = true;
+            
+            if (!formData.issueType) {
+                showError('issueTypeError');
+                isValid = false;
+            }
+            
+            if (!formData.schoolName || formData.schoolName.trim().length < 3) {
+                showError('schoolNameError');
+                isValid = false;
+            }
+            
+            if (!formData.priority) {
+                showError('priorityError');
+                isValid = false;
+            }
+            
+            if (!formData.description || formData.description.trim().length < 10) {
+                showError('descriptionError');
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+
+        // Validate step 2
+        function validateStep2() {
+            let isValid = true;
+            
+            if (!formData.lga) {
+                showError('lgaError');
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+
+        // Validate step 3
+        function validateStep3() {
+            // Contact info is optional for anonymous reports
+            return true;
+        }
+
+        // Submit report
+        async function submitReport() {
+            const nextBtn = document.getElementById('nextBtn');
+            const loading = nextBtn.querySelector('.loading');
+            
+            nextBtn.disabled = true;
+            loading.style.display = 'inline-block';
+            
+            try {
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Generate report ID
+                const reportId = 'EDT-' + new Date().getFullYear() + '-' + 
+                               String(Date.now()).slice(-6);
+                
+                // Update success container
+                document.getElementById('reportId').textContent = reportId;
+                
+                // Hide form and show success
+                document.querySelector('.form-container').style.display = 'none';
+                document.getElementById('successContainer').classList.add('show');
+                
+                showToast('Report submitted successfully! 🎉');
+                
+                // Store report data (simulate)
+                console.log('Report Data:', formData);
+                
+            } catch (error) {
+                showToast('Failed to submit report. Please try again.', 'error');
+                nextBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        }
+
+        // Utility functions
+        function showError(errorId) {
+            document.getElementById(errorId).classList.add('show');
+        }
+
+        function hideError(errorId) {
+            document.getElementById(errorId).classList.remove('show');
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? 'var(--primary-green)' : 'var(--red-500)'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                box-shadow: var(--shadow-lg);
+                z-index: 10000;
+                animation: slideInRight 0.3s ease;
+                max-width: 300px;
+            `;
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Add animation styles
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOutRight {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Global API for external use
+        window.EduTrackReport = {
+            getCurrentFormData: () => formData,
+            setFormData: (data) => Object.assign(formData, data),
+            validateForm: validateCurrentStep,
+            submitReport: submitReport,
+            showToast: showToast
+        };
+
+        console.log('🚀 EduTrack Report Form Initialized');
+        console.log('📝 Multi-step form with validation ready');
+        console.log('📍 GPS and map integration active');
+    </script>
+</body>
+</html>
